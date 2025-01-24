@@ -13,10 +13,11 @@ namespace Backend.Models
         public string ProductId { get; set; }
 
         public int Quantity { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public string Status { get; set; } = "Pending";
         public decimal TotalAmount { get; set; }
 
-        public Product Product { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        //public Product Product { get; set; }
     }
 }

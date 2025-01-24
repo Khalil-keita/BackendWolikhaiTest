@@ -1,13 +1,12 @@
-using Backend.Database;
 using Backend.Services.Interfaces;
 using Backend.Services;
+using Backend.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration MongoDB
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
-builder.Services.AddSingleton<MongoDbContext>(); // Enregistre MongoDBContext
-
+builder.Services.AddSingleton<MongoDbContext>(); 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 

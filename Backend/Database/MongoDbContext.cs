@@ -5,8 +5,8 @@ using MongoDB.Driver;
 namespace Backend.Database
 {
 
-public class MongoDbContext
-{
+    public class MongoDbContext
+    {
         private readonly IMongoDatabase _database;
         private readonly CollectionsSettings _collections;
 

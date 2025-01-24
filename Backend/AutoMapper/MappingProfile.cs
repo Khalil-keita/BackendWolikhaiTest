@@ -14,7 +14,7 @@ namespace Backend.AutoMapper
                 .ForMember(dest => dest.Id, opt => opt.Ignore()); 
 
             CreateMap<Order, OrderDTO>()
-                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name)) 
+                //.ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name)) 
                 .ReverseMap()
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
         }

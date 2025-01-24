@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Collections.Generic;
+using AutoMapper;
 using Backend.Database;
 using Backend.DTO;
 using Backend.Models;
@@ -20,14 +21,18 @@ namespace Backend.Services
 
         public async Task<List<OrderDTO>> GetAllOrdersAsync()
         {
+            //var allProducts = new List<OrderDTO>();
             var orders = await _orders.Find(_ => true).ToListAsync();
             var orderDTOs = new List<OrderDTO>();
 
-            foreach (var order in orders)
-            {
-                 var orderDTO = _mapper.Map<OrderDTO>(order);
-                 orderDTOs.Add(orderDTO);
-            }
+            orderDTOs = _mapper.Map< List<OrderDTO>> (orders);
+            //orderDTOs.Add(orderDTO);
+
+            //foreach (var order in orders)
+            //{
+            //     var orderDTO = _mapper.Map<OrderDTO>(order);
+            //     orderDTOs.Add(orderDTO);
+            //}
 
             return orderDTOs;
         }

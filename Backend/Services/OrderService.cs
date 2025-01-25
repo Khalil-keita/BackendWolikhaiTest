@@ -1,72 +1,101 @@
-﻿using System.Collections.Generic;
-using AutoMapper;
-using Backend.Database;
+﻿using AutoMapper;
 using Backend.DTO;
 using Backend.Models;
 using Backend.Services.Interfaces;
+using Backend.Shared;
 using MongoDB.Driver;
 
-namespace Backend.Services
+public class OrderService : IOrderService
 {
-    public class OrderService : IOrderService
+    private readonly IMongoCollection<Order> _orders;
+    private readonly IMapper _mapper;
+
+    public OrderService(IMongoDatabase database, IMapper mapper)
     {
-        private readonly IMongoCollection<Order> _orders;
-        private readonly IMapper _mapper;
+        _orders = database.GetCollection<Order>("Orders");
+        _mapper = mapper;
+    }
 
-        public OrderService(MongoDbContext context, IMapper mapper)
+    public async Task<Result<OrderDTO>> CreateOrderAsync(OrderDTO orderDTO)
+    {
+        try
         {
-            _orders = context.Orders;
-            _mapper = mapper;
+            var order = _mapper.Map<Order>(orderDTO);
+            await _orders.InsertOneAsync(order);
+            var resultDTO = _mapper.Map<OrderDTO>(order);
+            return Result<OrderDTO>.Success(resultDTO);
         }
-
-        public async Task<List<OrderDTO>> GetAllOrdersAsync()
+        catch (Exception ex)
         {
-            //var allProducts = new List<OrderDTO>();
-            var orders = await _orders.Find(_ => true).ToListAsync();
-            var orderDTOs = new List<OrderDTO>();
-
-            orderDTOs = _mapper.Map< List<OrderDTO>> (orders);
-            //orderDTOs.Add(orderDTO);
-
-            //foreach (var order in orders)
-            //{
-            //     var orderDTO = _mapper.Map<OrderDTO>(order);
-            //     orderDTOs.Add(orderDTO);
-            //}
-
-            return orderDTOs;
+            return Result<OrderDTO>.Failure($"Erreur lors de la création de la commande : {ex.Message}");
         }
+    }
 
-        public async Task<OrderDTO> GetOrderByIdAsync(string id)
+    public async Task<Result<OrderDTO>> GetOrderByIdAsync(string id)
+    {
+        try
         {
             var order = await _orders.Find(o => o.Id == id).FirstOrDefaultAsync();
-            if (order == null) return null;
-
-            return _mapper.Map<OrderDTO>(order); 
+            if (order == null)
+            {
+                return Result<OrderDTO>.Failure("Commande non trouvée");
+            }
+            var orderDTO = _mapper.Map<OrderDTO>(order);
+            return Result<OrderDTO>.Success(orderDTO);
         }
-
-        public async Task<OrderDTO> CreateOrderAsync(OrderDTO orderDTO)
+        catch (Exception ex)
         {
-            var order = _mapper.Map<Order>(orderDTO); 
-            order.CreatedAt = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
-
-            await _orders.InsertOneAsync(order); 
-            return await GetOrderByIdAsync(order.Id); 
+            return Result<OrderDTO>.Failure($"Erreur lors de la récupération de la commande : {ex.Message}");
         }
+    }
 
-        public async Task UpdateOrderAsync(string id, OrderDTO orderDTO)
+    public async Task<Result<IEnumerable<OrderDTO>>> GetAllOrdersAsync()
+    {
+        try
         {
-            var existingOrder = await _orders.Find(o => o.Id == id).FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Order not found.");
-            _mapper.Map(orderDTO, existingOrder);
-            existingOrder.UpdatedAt = DateTime.UtcNow;
-
-             await _orders.ReplaceOneAsync(o => o.Id == id, existingOrder); 
+            var orders = await _orders.Find(o => true).ToListAsync();
+            var orderDTOs = _mapper.Map<IEnumerable<OrderDTO>>(orders);
+            return Result<IEnumerable<OrderDTO>>.Success(orderDTOs);
         }
-
-        public async Task DeleteOrderAsync(string id)
+        catch (Exception ex)
         {
-            await _orders.DeleteOneAsync(o => o.Id == id);
+            return Result<IEnumerable<OrderDTO>>.Failure($"Erreur lors de la récupération des commandes : {ex.Message}");
+        }
+    }
+
+    public async Task<Result<OrderDTO>> UpdateOrderAsync(string id, OrderDTO orderDTO)
+    {
+        try
+        {
+            var order = _mapper.Map<Order>(orderDTO);
+            var result = await _orders.ReplaceOneAsync(o => o.Id == id, order);
+            if (result.IsAcknowledged)
+            {
+                var updatedOrderDTO = _mapper.Map<OrderDTO>(order);
+                return Result<OrderDTO>.Success(updatedOrderDTO);
+            }
+            return Result<OrderDTO>.Failure("Commande non trouvée ou échec de la mise à jour");
+        }
+        catch (Exception ex)
+        {
+            return Result<OrderDTO>.Failure($"Erreur lors de la mise à jour de la commande : {ex.Message}");
+        }
+    }
+
+    public async Task<Result<bool>> DeleteOrderAsync(string id)
+    {
+        try
+        {
+            var result = await _orders.DeleteOneAsync(o => o.Id == id);
+            if (result.IsAcknowledged)
+            {
+                return Result<bool>.Success(true);
+            }
+            return Result<bool>.Failure("Commande non trouvée ou échec de la suppression");
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failure($"Erreur lors de la suppression de la commande : {ex.Message}");
         }
     }
 }

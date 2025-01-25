@@ -1,10 +1,15 @@
 ﻿namespace Backend.DTO
 {
+    public class OrderProductDTO
+    {
+        public ProductDTO Product { get; set; }
+        public int Quantity { get; set; }
+    }
+
     public class OrderDTO
     {
-        public string Id { get; set; }
-        public string ProductId { get; set; }
-        //public string ProductName { get; set; }
-        public int Quantity { get; set; } 
+        public List<OrderProductDTO> Products { get; set; }
+        public decimal Montant { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
